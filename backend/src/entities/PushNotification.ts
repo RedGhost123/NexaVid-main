@@ -1,0 +1,4 @@
+useEffect(() => {
+    Notification.requestPermission();
+  }, []);
+  

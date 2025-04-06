@@ -1,0 +1,88 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or "mysql" or "sqlite"
+  url      = env("DATABASE_URL") // Make sure this is set in .env file
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  password            String
+  fullName            String
+  refreshToken        String?
+  twoFactorSecret     String?
+  twoFactorEnabled    Boolean   @default(false)
+  failedLoginAttempts Int       @default(0)
+  isLocked            Boolean   @default(false)
+  lastLoginIp         String?
+  ip                  String? // ✅ Add this field
+  lastLoginLocation   String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  otpCode             String? // Stores OTP for 2FA
+  otpExpires          DateTime? // Expiration time for OTP
+  provider            String? // ✅ Add this field
+  providerId          String? // ✅ Add this field
+  unlockToken         String? // ✅ Add this field
+  unlockTokenExpires  DateTime? // ✅ Add this field
+  unlockTime          DateTime?
+  resetToken          String? // ✅ Must exist in your database
+  resetTokenExpires   DateTime?
+  description         String?
+  videoUrl            String
+  status              String    @default("processing")
+  sessions            Session[] // Relation with Session
+  videos              Video[] // ✅ <-- Add this line to fix the relation
+  credits     Int     @default(10)  // Default 10 free credits
+  subscription SubscriptionType @default(FREE)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String
+  device    String
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum VideoStatus {
+  pending
+  processing
+  completed
+  failed
+  reviewing
+  published
+}
+
+model Video {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  videoUrl    String
+  url         String
+  status      VideoStatus @default(pending)
+  createdAt   DateTime    @default(now())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+}
+enum SubscriptionType {
+  FREE
+  PRO
+  BUSINESS
+}
+
+model Timeline {
+  id         String   @id @default(uuid())
+  projectId  String   @unique
+  edits      Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
